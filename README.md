@@ -88,7 +88,7 @@ Download and arrange datasets following standard WSSS conventions:
 
 Update `data_root` in `configs/voc.yaml` / `configs/coco.yaml` accordingly.
 
-## Training (two-phase, per Sec. III)
+## Training
 
 ```bash
 # Phase 1: CeSePro CAMs -> CoReSAM3 -> preliminary pseudo-labels -> train HiBoDec
@@ -113,11 +113,3 @@ python scripts/eval.py --config configs/voc.yaml --checkpoint work_dirs/voc/phas
 Performs multi-scale testing (scales 0.75/1.0/2.0) with DenseCRF post-processing,
 matching the paper's evaluation protocol.
 
-## Hyperparameters (Sec. III)
-
-- Optimizer: AdamW, polynomial LR decay
-- LR: `1e-3` (CeSePro), `1e-4` (HiBoDec)
-- Iterations: 30k (VOC), 80k (COCO), batch size 4
-- Input: 512×512 random-resize-crop
-- Loss weights: `lambda_div=0.1`, `lambda_1=1.0` (CeSePro), `lambda_2=0.5` (edge)
-- Pseudo-label thresholds: fg=0.35, bg=0.15, min component area=64px, NMS IoU=0.5
