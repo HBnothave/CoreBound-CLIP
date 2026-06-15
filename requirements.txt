@@ -1,0 +1,11 @@
+torch>=2.0
+torchvision>=0.15
+ftfy
+regex
+tqdm
+pyyaml
+numpy
+pillow
+opencv-python
+pydensecrf
+git+https://github.com/openai/CLIP.git

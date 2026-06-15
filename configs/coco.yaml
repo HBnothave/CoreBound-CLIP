@@ -1,0 +1,36 @@
+# Config for MS COCO 2014
+
+dataset: coco
+data_root: ./data/COCO2014
+num_classes: 81
+crop_size: 512
+batch_size: 4
+
+clip_checkpoint: ./pretrained/clip/ViT-B-16.pt
+sam3_checkpoint: ./pretrained/sam3/sam3_checkpoint.pt
+
+vit_dim: 768
+text_dim: 512
+proj_dim: 256
+
+lr_cesepro: 1.0e-3
+lr_hibodec: 1.0e-4
+weight_decay: 1.0e-4
+poly_power: 1.0
+
+iters_phase1: 80000
+iters_phase2: 80000
+
+lambda_div: 0.1
+lambda_cesepro: 1.0
+lambda_edge: 0.5
+
+fg_thresh: 0.35
+bg_thresh: 0.15
+min_area: 64
+nms_iou: 0.5
+
+eval_scales: [0.75, 1.0, 2.0]
+use_dense_crf: true
+
+log_dir: ./work_dirs/coco

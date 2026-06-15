@@ -1,0 +1,40 @@
+# Config for PASCAL VOC 2012
+
+dataset: voc
+data_root: ./data/VOCdevkit/VOC2012
+num_classes: 21
+crop_size: 512
+batch_size: 4
+
+# Implementation details (Sec. III, Implementation details)
+clip_checkpoint: ./pretrained/clip/ViT-B-16.pt
+sam3_checkpoint: ./pretrained/sam3/sam3_checkpoint.pt
+
+vit_dim: 768
+text_dim: 512
+proj_dim: 256
+
+lr_cesepro: 1.0e-3
+lr_hibodec: 1.0e-4
+weight_decay: 1.0e-4
+poly_power: 1.0
+
+iters_phase1: 30000
+iters_phase2: 30000
+
+# Loss weights (Sec. III, Loss weights)
+lambda_div: 0.1
+lambda_cesepro: 1.0
+lambda_edge: 0.5
+
+# Pseudo-label thresholds (Sec. III, Pseudo-label thresholding)
+fg_thresh: 0.35
+bg_thresh: 0.15
+min_area: 64
+nms_iou: 0.5
+
+# Inference
+eval_scales: [0.75, 1.0, 2.0]
+use_dense_crf: true
+
+log_dir: ./work_dirs/voc
