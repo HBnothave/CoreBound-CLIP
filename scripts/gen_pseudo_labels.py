@@ -19,25 +19,19 @@ import torch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from model import CoreBoundCLIP, CoReSAM3, assemble_pseudo_label
+from model import CoreBoundCLIP, CoReSAM3, assemble_pseudo_label, build_sam3_predictor
 from datasets import VOCWSSSDataset, VOC_CLASSES, COCOWSSSDataset, COCO_CLASSES
 
 
-def load_sam3_predictor(checkpoint_path, device):
-    """Load the official SAM3 concept-prompted predictor.
+def load_sam3_predictor(checkpoint_path, device, model_type="vit_b"):
+    """Build the concept-prompted predictor used by CoReSAM3.
 
-    Replace this with the actual SAM3 API. See README for download
-    instructions and the expected predictor interface
-    (predict(image, box, text) -> binary mask).
+    Uses the official SAM3 package if installed, otherwise falls back to a
+    SAM(1/2) box predictor + CLIP concept scoring (see
+    model/sam3_adapter.py). `model_type` is only used by the fallback and
+    should match the checkpoint (e.g. 'vit_b', 'vit_l', 'vit_h').
     """
-    try:
-        from sam3 import build_sam3_predictor  # placeholder import
-    except ImportError as e:
-        raise ImportError(
-            "SAM3 package not found. Install the official SAM3 release "
-            "and place the checkpoint as described in README.md."
-        ) from e
-    return build_sam3_predictor(checkpoint_path, device=device)
+    return build_sam3_predictor(checkpoint_path, device=device, model_type=model_type)
 
 
 def main():
@@ -83,8 +77,11 @@ def main():
         state = torch.load(args.checkpoint, map_location=device)
         model.cesepro.load_state_dict(state["cesepro"])
         model.hibodec.load_state_dict(state["hibodec"])
+        if "rfm" in state:
+            model.rfm.load_state_dict(state["rfm"])
 
-    sam3 = CoReSAM3(load_sam3_predictor(cfg["sam3_checkpoint"], device))
+    sam3 = CoReSAM3(load_sam3_predictor(cfg["sam3_checkpoint"], device,
+                                         model_type=cfg.get("sam_model_type", "vit_b")))
     prompt_template = "a photo of a {}"
 
     with torch.no_grad():

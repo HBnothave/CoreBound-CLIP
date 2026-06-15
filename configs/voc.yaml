@@ -9,6 +9,10 @@ batch_size: 4
 # Implementation details (Sec. III, Implementation details)
 clip_checkpoint: ./pretrained/clip/ViT-B-16.pt
 sam3_checkpoint: ./pretrained/sam3/sam3_checkpoint.pt
+# Used only by the SAM(1/2) fallback in model/sam3_adapter.py if the
+# official SAM3 package is not installed. Must match sam3_checkpoint
+# when pointing at a SAM/SAM2 ViT checkpoint (vit_b/vit_l/vit_h).
+sam_model_type: vit_b
 
 vit_dim: 768
 text_dim: 512

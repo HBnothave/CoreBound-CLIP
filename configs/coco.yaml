@@ -8,6 +8,7 @@ batch_size: 4
 
 clip_checkpoint: ./pretrained/clip/ViT-B-16.pt
 sam3_checkpoint: ./pretrained/sam3/sam3_checkpoint.pt
+sam_model_type: vit_b
 
 vit_dim: 768
 text_dim: 512

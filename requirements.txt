@@ -9,3 +9,7 @@ pillow
 opencv-python
 pydensecrf
 git+https://github.com/openai/CLIP.git
+# SAM3 (preferred) is not on PyPI; install the official release separately
+# and place it on PYTHONPATH (see README.md). The line below installs the
+# fallback box-prompted predictor used by CoReSAM3 if SAM3 is unavailable.
+git+https://github.com/facebookresearch/segment-anything.git

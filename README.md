@@ -8,6 +8,9 @@ components:
 
 - **CeSePro** — Core-to-Extent Semantic Prompting: dual-expert (core/extent) text
   prototypes fused via an image-conditioned gate `alpha`.
+- **RFM** — Residual Fusion Module, retained from WeCLIP as an auxiliary
+  CAM-enhancement branch that refines the dense feature map used in CeSePro's
+  CAM similarity.
 - **HiBoDec** — Hierarchical Boundary-Aware Decoder: fuses multi-level CLIP ViT
   features (4 stage groups from 12 layers) with a shallow-feature edge branch.
 - **CoReSAM3** — Concept-Guided Refinement with SAM3: refines CAM-/prediction-derived
@@ -19,9 +22,11 @@ components:
 CoreBound-CLIP/
 ├── model/
 │   ├── clip_backbone.py   # frozen CLIP ViT-B/16 wrapper, multi-level features
+│   ├── rfm.py               # WeCLIP residual fusion module (CAM-enhancement branch)
 │   ├── cesepro.py          # CeSePro dual-expert prompting (Eq. 1-6)
 │   ├── hibodec.py          # HiBoDec hierarchical decoder (Eq. 5-9)
-│   ├── coresam3.py          # CoReSAM3 box extraction + SAM3 refinement (Eq. 10-11)
+│   ├── coresam3.py          # CoReSAM3 box extraction + refinement logic (Eq. 10-11)
+│   ├── sam3_adapter.py     # SAM3 predictor adapter (+ SAM1/2 fallback)
 │   └── corebound_clip.py   # full model
 ├── datasets/                # VOC / COCO WSSS dataset loaders
 ├── utils/                   # Sobel edge targets, mIoU, DenseCRF
@@ -47,15 +52,32 @@ These are **not** included in this repository.
 | Model | Purpose | Download | Location |
 |---|---|---|---|
 | CLIP ViT-B/16 | Frozen vision-language backbone | [OpenAI CLIP](https://github.com/openai/CLIP) (`clip.load("ViT-B/16")` auto-downloads, or download `ViT-B-16.pt` manually) | `pretrained/clip/ViT-B-16.pt` |
-| SAM3 | Concept-guided pseudo-label refinement (CoReSAM3) | Official SAM3 release (Meta) | `pretrained/sam3/sam3_checkpoint.pt` |
+| SAM3 (preferred) | Concept-guided pseudo-label refinement (CoReSAM3) | Official SAM3 release (Meta) | `pretrained/sam3/sam3_checkpoint.pt` |
+| SAM / SAM2 (fallback) | Used automatically if SAM3 is unavailable | [segment-anything](https://github.com/facebookresearch/segment-anything) or [SAM2](https://github.com/facebookresearch/segment-anything-2) checkpoints | `pretrained/sam3/sam3_checkpoint.pt` (point `sam3_checkpoint` at this file instead) |
 
-Update `clip_checkpoint` / `sam3_checkpoint` paths in `configs/voc.yaml` and
-`configs/coco.yaml` if you place checkpoints elsewhere.
+Update `clip_checkpoint` / `sam3_checkpoint` / `sam_model_type` paths in
+`configs/voc.yaml` and `configs/coco.yaml` if you place checkpoints
+elsewhere.
 
-`scripts/gen_pseudo_labels.py` expects a SAM3 Python package exposing
-`build_sam3_predictor(checkpoint_path, device)` returning an object with
-`predict(image, box=[x1,y1,x2,y2], text="a photo of a {class}") -> binary mask`.
-Adapt `load_sam3_predictor()` in that script to match the official SAM3 API.
+### SAM3 integration
+
+`model/sam3_adapter.py` provides `build_sam3_predictor(checkpoint_path, device, model_type)`,
+used by `scripts/gen_pseudo_labels.py`:
+
+- **If the official SAM3 package is installed** (importable as `sam3`,
+  providing `sam3.build_sam.build_sam3` and `sam3.predictor.SAM3Predictor`),
+  it is used directly with joint box + text concept prompts, matching
+  Eq. 10-11 of the paper. Adjust the import paths in `Sam3Predictor` if the
+  released package's module layout differs.
+- **Otherwise**, the adapter falls back to `segment-anything` (SAM1/2) box
+  prompting plus a CLIP-based concept-consistency check (rejecting masks
+  whose crop doesn't match the class text above a similarity threshold).
+  This lets the full pipeline run end-to-end on widely available checkpoints
+  while approximating CoReSAM3's concept-guided behavior. Set
+  `sam_model_type` in the config to match the fallback checkpoint
+  (`vit_b` / `vit_l` / `vit_h`).
+
+For results matching the paper, use the official SAM3 release once available.
 
 ## Data preparation
 

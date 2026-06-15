@@ -74,9 +74,12 @@ def main():
         state = torch.load(args.resume, map_location=device)
         model.cesepro.load_state_dict(state["cesepro"])
         model.hibodec.load_state_dict(state["hibodec"])
+        if "rfm" in state:
+            model.rfm.load_state_dict(state["rfm"])
 
     optimizer = torch.optim.AdamW([
-        {"params": model.cesepro.parameters(), "lr": cfg["lr_cesepro"]},
+        {"params": list(model.cesepro.parameters()) + list(model.rfm.parameters()),
+         "lr": cfg["lr_cesepro"]},
         {"params": model.hibodec.parameters(), "lr": cfg["lr_hibodec"]},
     ], weight_decay=cfg["weight_decay"])
 
@@ -127,13 +130,15 @@ def main():
 
             if it % 5000 == 0 and it > 0:
                 ckpt = {"cesepro": model.cesepro.state_dict(),
-                        "hibodec": model.hibodec.state_dict()}
+                        "hibodec": model.hibodec.state_dict(),
+                        "rfm": model.rfm.state_dict()}
                 torch.save(ckpt, os.path.join(cfg["log_dir"], f"phase{args.phase}_iter{it}.pth"))
 
             it += 1
 
     ckpt = {"cesepro": model.cesepro.state_dict(),
-            "hibodec": model.hibodec.state_dict()}
+            "hibodec": model.hibodec.state_dict(),
+            "rfm": model.rfm.state_dict()}
     torch.save(ckpt, os.path.join(cfg["log_dir"], f"phase{args.phase}_final.pth"))
     print(f"Saved final phase {args.phase} checkpoint to {cfg['log_dir']}")
 
